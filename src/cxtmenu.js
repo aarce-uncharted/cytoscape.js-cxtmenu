@@ -152,7 +152,6 @@ let cxtmenu = function(params){
 
       c2d.fillStyle = options.fillColor;
     }
-
     // draw separators between items
     c2d.globalCompositeOperation = 'destination-out';
     c2d.strokeStyle = 'white';
@@ -377,7 +376,7 @@ let cxtmenu = function(params){
             res.then(_commands => {
               commands = _commands;
               openMenu();
-            })
+            });
           } else {
             commands = res;
             openMenu();
@@ -441,7 +440,7 @@ let cxtmenu = function(params){
         }
       })
 
-      .on('cxtdrag tapdrag', options.selector, dragHandler = function(e){
+      .on('cxtdrag', options.selector, dragHandler = function(e){
 
         if( !inGesture ){ return; }
 
@@ -455,6 +454,11 @@ let cxtmenu = function(params){
 
         let dx = pageX - offset.left - ctrx;
         let dy = pageY - offset.top - ctry;
+
+        if(!((dx > -100 && dx < 100) && (dy > -100 && dy < 100))) {
+          queueDrawBg();
+          return;
+        }
 
         if( dx === 0 ){ dx = 0.01; }
 
@@ -504,7 +508,7 @@ let cxtmenu = function(params){
 
       .on('tapdrag', dragHandler)
 
-      .on('cxttapend tapend', function(){
+      .on('click', function(){
         parent.style.display = 'none';
 
         if( activeCommandI !== undefined ){

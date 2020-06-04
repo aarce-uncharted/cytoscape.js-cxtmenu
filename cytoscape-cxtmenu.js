@@ -243,7 +243,6 @@ var cxtmenu = function cxtmenu(params) {
 
       c2d.fillStyle = options.fillColor;
     }
-
     // draw separators between items
     c2d.globalCompositeOperation = 'destination-out';
     c2d.strokeStyle = 'white';
@@ -445,6 +444,7 @@ var cxtmenu = function cxtmenu(params) {
     bindings.on('resize', function () {
       updatePixelRatio();
     }).on(options.openMenuEvents, options.selector, function (e) {
+      console.log(this);
       target = this; // Remember which node the context menu is for
       var ele = this;
       var isCy = this === cy;
@@ -529,7 +529,7 @@ var cxtmenu = function cxtmenu(params) {
         inGesture = true;
         gestureStartEvent = e;
       }
-    }).on('cxtdrag tapdrag', options.selector, dragHandler = function dragHandler(e) {
+    }).on('cxtdrag', options.selector, dragHandler = function dragHandler(e) {
 
       if (!inGesture) {
         return;
@@ -545,6 +545,11 @@ var cxtmenu = function cxtmenu(params) {
 
       var dx = pageX - offset.left - ctrx;
       var dy = pageY - offset.top - ctry;
+
+      if (!(dx > -100 && dx < 100 && dy > -100 && dy < 100)) {
+        queueDrawBg();
+        return;
+      }
 
       if (dx === 0) {
         dx = 0.01;
@@ -591,7 +596,7 @@ var cxtmenu = function cxtmenu(params) {
       }
 
       queueDrawCommands(rx, ry, theta);
-    }).on('tapdrag', dragHandler).on('cxttapend tapend', function () {
+    }).on('tapdrag', dragHandler).on('click', function () {
       parent.style.display = 'none';
 
       if (activeCommandI !== undefined) {
@@ -700,7 +705,7 @@ var defaults = {
   spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
   minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight
   maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight
-  openMenuEvents: 'cxttapstart taphold', // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
+  openMenuEvents: 'cxttap', // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
   itemColor: 'white', // the colour of text in the command's content
   itemTextShadowColor: 'transparent', // the text shadow colour of the command's content
   zIndex: 9999, // the z-index of the ui div
