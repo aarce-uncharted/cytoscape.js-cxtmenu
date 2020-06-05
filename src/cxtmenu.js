@@ -313,7 +313,6 @@ let cxtmenu = function(params){
   function addEventListeners(){
     let grabbable;
     let inGesture = false;
-    let dragHandler;
     let zoomEnabled;
     let panEnabled;
     let boxEnabled;
@@ -350,174 +349,174 @@ let cxtmenu = function(params){
       restoreBoxSeln();
     };
 
-    window.addEventListener('resize', updatePixelRatio);
+    const startHandler = function(e){
+      target = this; // Remember which node the context menu is for
+      let ele = this;
+      let isCy = this === cy;
 
-    bindings
-      .on('resize', function(){
-        updatePixelRatio();
-      })
-
-      .on(options.openMenuEvents, options.selector, function(e){
-        target = this; // Remember which node the context menu is for
-        let ele = this;
-        let isCy = this === cy;
-
-        if (inGesture) {
-          parent.style.display = 'none';
-
-          inGesture = false;
-
-          restoreGestures();
-        }
-
-        if( typeof options.commands === 'function' ){
-          const res = options.commands(target);
-          if( res.then ){
-            res.then(_commands => {
-              commands = _commands;
-              openMenu();
-            });
-          } else {
-            commands = res;
-            openMenu();
-          }
-        } else {
-          commands = options.commands;
-          openMenu();
-        }
-
-        function openMenu(){
-          if( !commands || commands.length === 0 ){ return; }
-
-          zoomEnabled = cy.userZoomingEnabled();
-          cy.userZoomingEnabled( false );
-
-          panEnabled = cy.userPanningEnabled();
-          cy.userPanningEnabled( false );
-
-          boxEnabled = cy.boxSelectionEnabled();
-          cy.boxSelectionEnabled( false );
-
-          grabbable = target.grabbable &&  target.grabbable();
-          if( grabbable ){
-            target.ungrabify();
-          }
-
-          let rp, rw, rh;
-          if( !isCy && ele.isNode() && !ele.isParent() && !options.atMouse ){
-            rp = ele.renderedPosition();
-            rw = ele.renderedWidth();
-            rh = ele.renderedHeight();
-          } else {
-            rp = e.renderedPosition || e.cyRenderedPosition;
-            rw = 1;
-            rh = 1;
-          }
-
-          offset = getOffset(container);
-
-          ctrx = rp.x;
-          ctry = rp.y;
-
-          createMenuItems();
-
-          setStyles(parent, {
-            display: 'block',
-            left: (rp.x - r) + 'px',
-            top: (rp.y - r) + 'px'
-          });
-
-          rs = Math.max(rw, rh)/2;
-          rs = Math.max(rs, options.minSpotlightRadius);
-          rs = Math.min(rs, options.maxSpotlightRadius);
-
-          queueDrawBg();
-
-          activeCommandI = undefined;
-
-          inGesture = true;
-          gestureStartEvent = e;
-        }
-      })
-
-      .on('cxtdrag', options.selector, dragHandler = function(e){
-
-        if( !inGesture ){ return; }
-
-        let origE = e.originalEvent;
-        let isTouch = origE.touches && origE.touches.length > 0;
-
-        let pageX = (isTouch ? origE.touches[0].pageX : origE.pageX) - window.pageXOffset;
-        let pageY = (isTouch ? origE.touches[0].pageY : origE.pageY) - window.pageYOffset;
-
-        activeCommandI = undefined;
-
-        let dx = pageX - offset.left - ctrx;
-        let dy = pageY - offset.top - ctry;
-        if( dx === 0 ){ dx = 0.01; }
-
-        let d = Math.sqrt( dx*dx + dy*dy );
-        let cosTheta = (dy*dy - d*d - dx*dx)/(-2 * d * dx);
-        let theta = Math.acos( cosTheta );
-
-        if( d < rs + options.spotlightPadding || d > 100 ){
-          queueDrawBg();
-          return;
-        }
-
-        queueDrawBg();
-        let rx = dx*r / d;
-        let ry = dy*r / d;
-
-        if( dy > 0 ){
-          theta = Math.PI + Math.abs(theta - Math.PI);
-        }
-
-        let dtheta = 2*Math.PI/(commands.length);
-        let theta1 = Math.PI/2;
-        let theta2 = theta1 + dtheta;
-
-        for( let i = 0; i < commands.length; i++ ){
-          let command = commands[i];
-
-          let inThisCommand = theta1 <= theta && theta <= theta2
-            || theta1 <= theta + 2*Math.PI && theta + 2*Math.PI <= theta2;
-
-          if( command.disabled === true || command.enabled === false ){
-            inThisCommand = false;
-          }
-
-          if( inThisCommand ){
-            activeCommandI = i;
-            break;
-          }
-
-          theta1 += dtheta;
-          theta2 += dtheta;
-        }
-
-        queueDrawCommands( rx, ry, theta );
-      })
-
-      .on('tapdrag', dragHandler)
-
-      .on('click', function(){
+      if (inGesture) {
         parent.style.display = 'none';
-
-        if( activeCommandI !== undefined ){
-          let select = commands[ activeCommandI ].select;
-
-          if( select ){
-            select.apply( target, [target, gestureStartEvent] );
-            activeCommandI = undefined;
-          }
-        }
 
         inGesture = false;
 
         restoreGestures();
-      })
-    ;
+      }
+
+      if( typeof options.commands === 'function' ){
+        const res = options.commands(target);
+        if( res.then ){
+          res.then(_commands => {
+            commands = _commands;
+            openMenu();
+          });
+        } else {
+          commands = res;
+          openMenu();
+        }
+      } else {
+        commands = options.commands;
+        openMenu();
+      }
+
+      function openMenu(){
+        if( !commands || commands.length === 0 ){ return; }
+
+        zoomEnabled = cy.userZoomingEnabled();
+        cy.userZoomingEnabled( false );
+
+        panEnabled = cy.userPanningEnabled();
+        cy.userPanningEnabled( false );
+
+        boxEnabled = cy.boxSelectionEnabled();
+        cy.boxSelectionEnabled( false );
+
+        grabbable = target.grabbable &&  target.grabbable();
+        if( grabbable ){
+          target.ungrabify();
+        }
+
+        let rp, rw, rh;
+        if( !isCy && ele.isNode() && !ele.isParent() && !options.atMouse ){
+          rp = ele.renderedPosition();
+          rw = ele.renderedWidth();
+          rh = ele.renderedHeight();
+        } else {
+          rp = e.renderedPosition || e.cyRenderedPosition;
+          rw = 1;
+          rh = 1;
+        }
+
+        offset = getOffset(container);
+
+        ctrx = rp.x;
+        ctry = rp.y;
+
+        createMenuItems();
+
+        setStyles(parent, {
+          display: 'block',
+          left: (rp.x - r) + 'px',
+          top: (rp.y - r) + 'px'
+        });
+
+        rs = Math.max(rw, rh)/2;
+        rs = Math.max(rs, options.minSpotlightRadius);
+        rs = Math.min(rs, options.maxSpotlightRadius);
+
+        queueDrawBg();
+
+        activeCommandI = undefined;
+
+        inGesture = true;
+        gestureStartEvent = e;
+      }
+    }
+
+    const closeMenuEvents = options.openMenuEvents === 'cxttap' ? 'click' :'cxttapend tapend';
+
+    const dragHandler = function(e){
+      if( !inGesture ){ return; }
+
+      let origE = e.originalEvent;
+      let isTouch = origE.touches && origE.touches.length > 0;
+
+      let pageX = (isTouch ? origE.touches[0].pageX : origE.pageX) - window.pageXOffset;
+      let pageY = (isTouch ? origE.touches[0].pageY : origE.pageY) - window.pageYOffset;
+
+      activeCommandI = undefined;
+
+      let dx = pageX - offset.left - ctrx;
+      let dy = pageY - offset.top - ctry;
+      if( dx === 0 ){ dx = 0.01; }
+
+      let d = Math.sqrt( dx*dx + dy*dy );
+      let cosTheta = (dy*dy - d*d - dx*dx)/(-2 * d * dx);
+      let theta = Math.acos( cosTheta );
+
+      if(d < rs + options.spotlightPadding || (options.openMenuEvents === 'cxttap' && d > containerSize/2)){
+        queueDrawBg();
+        return;
+      }
+
+      queueDrawBg();
+      let rx = dx*r / d;
+      let ry = dy*r / d;
+
+      if( dy > 0 ){
+        theta = Math.PI + Math.abs(theta - Math.PI);
+      }
+
+      let dtheta = 2*Math.PI/(commands.length);
+      let theta1 = Math.PI/2;
+      let theta2 = theta1 + dtheta;
+
+      for( let i = 0; i < commands.length; i++ ){
+        let command = commands[i];
+
+        let inThisCommand = theta1 <= theta && theta <= theta2
+          || theta1 <= theta + 2*Math.PI && theta + 2*Math.PI <= theta2;
+
+        if( command.disabled === true || command.enabled === false ){
+          inThisCommand = false;
+        }
+
+        if( inThisCommand ){
+          activeCommandI = i;
+          break;
+        }
+
+        theta1 += dtheta;
+        theta2 += dtheta;
+      }
+
+      queueDrawCommands( rx, ry, theta );
+    }
+
+    const endHandler = function(){
+      parent.style.display = 'none';
+
+      if( activeCommandI !== undefined ){
+        let select = commands[ activeCommandI ].select;
+
+        if( select ){
+          select.apply( target, [target, gestureStartEvent] );
+          activeCommandI = undefined;
+        }
+      }
+
+      inGesture = false;
+
+      restoreGestures();
+    }
+
+    window.addEventListener('resize', updatePixelRatio);
+
+    bindings
+      .on('resize', updatePixelRatio())
+      .on(options.openMenuEvents, options.selector, startHandler)
+      .on('cxtdrag tapdrag', options.selector, dragHandler)
+      .on('tapdrag', dragHandler)
+      .on(closeMenuEvents, endHandler);
   }
 
   function removeEventListeners(){
