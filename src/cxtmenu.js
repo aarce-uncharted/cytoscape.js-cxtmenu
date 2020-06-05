@@ -454,25 +454,18 @@ let cxtmenu = function(params){
 
         let dx = pageX - offset.left - ctrx;
         let dy = pageY - offset.top - ctry;
-
-        if(!((dx > -100 && dx < 100) && (dy > -100 && dy < 100))) {
-          queueDrawBg();
-          return;
-        }
-
         if( dx === 0 ){ dx = 0.01; }
 
         let d = Math.sqrt( dx*dx + dy*dy );
         let cosTheta = (dy*dy - d*d - dx*dx)/(-2 * d * dx);
         let theta = Math.acos( cosTheta );
 
-        if( d < rs + options.spotlightPadding ){
+        if( d < rs + options.spotlightPadding || d > 100 ){
           queueDrawBg();
           return;
         }
 
         queueDrawBg();
-
         let rx = dx*r / d;
         let ry = dy*r / d;
 
