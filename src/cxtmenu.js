@@ -313,36 +313,31 @@ let cxtmenu = function(params){
   function addEventListeners(){
     let grabbable;
     let inGesture = false;
+    let openCloseToggle = false; // Used only when options.openMenuEvents === options.closeMenuEvents;
     let zoomEnabled;
     let panEnabled;
     let boxEnabled;
     let gestureStartEvent;
 
-    let restoreZoom = function(){
-      if( zoomEnabled ){
-        cy.userZoomingEnabled( true );
-      }
+    const restoreZoom = function(){
+        cy.userZoomingEnabled(zoomEnabled);
     };
 
-    let restoreGrab = function(){
+    const restoreGrab = function(){
       if( grabbable ){
         target.grabify();
       }
     };
 
-    let restorePan = function(){
-      if( panEnabled ){
-        cy.userPanningEnabled( true );
-      }
+    const restorePan = function(){
+        cy.userPanningEnabled(panEnabled);
     };
 
-    let restoreBoxSeln = function(){
-      if( boxEnabled ){
-        cy.boxSelectionEnabled( true );
-      }
+    const restoreBoxSeln = function(){
+        cy.boxSelectionEnabled(boxEnabled);
     };
 
-    let restoreGestures = function(){
+    const restoreGestures = function(){
       restoreGrab();
       restoreZoom();
       restorePan();
@@ -350,47 +345,37 @@ let cxtmenu = function(params){
     };
 
     const startHandler = function(e){
+      if(openCloseToggle) return;
       target = this; // Remember which node the context menu is for
       let ele = this;
       let isCy = this === cy;
 
       if (inGesture) {
         parent.style.display = 'none';
-
         inGesture = false;
-
         restoreGestures();
       }
 
       if( typeof options.commands === 'function' ){
         const res = options.commands(target);
-        if( res.then ){
-          res.then(_commands => {
-            commands = _commands;
-            openMenu();
-          });
-        } else {
-          commands = res;
-          openMenu();
-        }
+        commands = res.then ? res.then(_commands => _commands) : res;
       } else {
         commands = options.commands;
-        openMenu();
       }
+      openMenu();
 
       function openMenu(){
         if( !commands || commands.length === 0 ){ return; }
 
         zoomEnabled = cy.userZoomingEnabled();
-        cy.userZoomingEnabled( false );
-
         panEnabled = cy.userPanningEnabled();
-        cy.userPanningEnabled( false );
-
         boxEnabled = cy.boxSelectionEnabled();
+
+        cy.userZoomingEnabled( false );
+        cy.userPanningEnabled( false );
         cy.boxSelectionEnabled( false );
 
-        grabbable = target.grabbable &&  target.grabbable();
+        grabbable = target.grabbable && target.grabbable();
         if( grabbable ){
           target.ungrabify();
         }
@@ -407,10 +392,8 @@ let cxtmenu = function(params){
         }
 
         offset = getOffset(container);
-
         ctrx = rp.x;
         ctry = rp.y;
-
         createMenuItems();
 
         setStyles(parent, {
@@ -424,15 +407,11 @@ let cxtmenu = function(params){
         rs = Math.min(rs, options.maxSpotlightRadius);
 
         queueDrawBg();
-
         activeCommandI = undefined;
-
         inGesture = true;
         gestureStartEvent = e;
       }
-    }
-
-    const closeMenuEvents = options.openMenuEvents === 'cxttap' ? 'click' :'cxttapend tapend';
+    };
 
     const dragHandler = function(e){
       if( !inGesture ){ return; }
@@ -490,24 +469,25 @@ let cxtmenu = function(params){
       }
 
       queueDrawCommands( rx, ry, theta );
-    }
+    };
 
     const endHandler = function(){
+      if(openCloseToggle === false && options.openMenuEvents === options.closeMenuEvents) {
+        openCloseToggle = true;
+        return;
+      }
       parent.style.display = 'none';
 
-      if( activeCommandI !== undefined ){
-        let select = commands[ activeCommandI ].select;
-
-        if( select ){
-          select.apply( target, [target, gestureStartEvent] );
-          activeCommandI = undefined;
-        }
+      let select = activeCommandI !== undefined ? commands[ activeCommandI ].select : undefined;
+      if( select ){
+        select.apply( target, [target, gestureStartEvent] );
+        activeCommandI = undefined;
       }
 
       inGesture = false;
-
+      openCloseToggle = false;
       restoreGestures();
-    }
+    };
 
     window.addEventListener('resize', updatePixelRatio);
 
@@ -516,7 +496,7 @@ let cxtmenu = function(params){
       .on(options.openMenuEvents, options.selector, startHandler)
       .on('cxtdrag tapdrag', options.selector, dragHandler)
       .on('tapdrag', dragHandler)
-      .on(closeMenuEvents, endHandler);
+      .on(options.closeMenuEvents, endHandler);
   }
 
   function removeEventListeners(){
