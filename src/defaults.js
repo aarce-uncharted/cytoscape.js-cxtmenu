@@ -23,7 +23,7 @@ let defaults = {
   minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight
   maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight
   /**
-   * Open and Close menu events are related and only support the following combinations.
+   * Open and Close menu events are space-seperated cytoscape events and only support the following combinations.
    * openMenuEvents = 'cxttapstart' and/or 'taphold', closeMenuEvents = 'cxttapend' and/or 'tapend',
    * openMenuEvents = 'cxttap', closeMenuEvents = 'click' or 'cxttap'
    */

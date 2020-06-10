@@ -95,7 +95,13 @@ let defaults = {
   spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
   minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight
   maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight
-  openMenuEvents: 'cxttapstart taphold', // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
+  /**
+   * Open and Close menu events are space-seperated cytoscape events and only support the following combinations.
+   * openMenuEvents = 'cxttapstart' and/or 'taphold', closeMenuEvents = 'cxttapend' and/or 'tapend',
+   * openMenuEvents = 'cxttap', closeMenuEvents = 'click' or 'cxttap'
+   */
+  openMenuEvents: 'cxttapstart taphold',
+  closeMenuEvents: 'cxttapend tapend',
   itemColor: 'white', // the colour of text in the command's content
   itemTextShadowColor: 'transparent', // the text shadow colour of the command's content
   zIndex: 9999, // the z-index of the ui div

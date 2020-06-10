@@ -313,7 +313,7 @@ let cxtmenu = function(params){
   function addEventListeners(){
     let grabbable;
     let inGesture = false;
-    let openCloseToggle = false; // Used only when options.openMenuEvents === options.closeMenuEvents;
+    let menuOpen = false; // Used only when duplicate open/close events. ie. `cxttap`
     let zoomEnabled;
     let panEnabled;
     let boxEnabled;
@@ -345,7 +345,7 @@ let cxtmenu = function(params){
     };
 
     const startHandler = function(e){
-      if(openCloseToggle) return;
+      if (menuOpen) return;
       target = this; // Remember which node the context menu is for
       let ele = this;
       let isCy = this === cy;
@@ -432,7 +432,7 @@ let cxtmenu = function(params){
       let cosTheta = (dy*dy - d*d - dx*dx)/(-2 * d * dx);
       let theta = Math.acos( cosTheta );
 
-      if(d < rs + options.spotlightPadding || (options.openMenuEvents === 'cxttap' && d > containerSize/2)){
+      if(d < rs + options.spotlightPadding || (options.openMenuEvents.includes('cxttap') && d > containerSize/2)){
         queueDrawBg();
         return;
       }
@@ -472,8 +472,10 @@ let cxtmenu = function(params){
     };
 
     const endHandler = function(){
-      if(openCloseToggle === false && options.openMenuEvents === options.closeMenuEvents) {
-        openCloseToggle = true;
+      const openEvts = options.openMenuEvents.split(' ');
+      const closeEvts = options.closeMenuEvents.split(' ');
+      if( !menuOpen && openEvts.filter(e => closeEvts.includes(e)).length ) {
+        menuOpen = true;
         return;
       }
       parent.style.display = 'none';
@@ -485,14 +487,14 @@ let cxtmenu = function(params){
       }
 
       inGesture = false;
-      openCloseToggle = false;
+      menuOpen = false;
       restoreGestures();
     };
 
     window.addEventListener('resize', updatePixelRatio);
 
     bindings
-      .on('resize', updatePixelRatio())
+      .on('resize', updatePixelRatio)
       .on(options.openMenuEvents, options.selector, startHandler)
       .on('cxtdrag tapdrag', options.selector, dragHandler)
       .on('tapdrag', dragHandler)

@@ -402,7 +402,7 @@ var cxtmenu = function cxtmenu(params) {
   function addEventListeners() {
     var grabbable = void 0;
     var inGesture = false;
-    var openCloseToggle = false; // Used only when options.openMenuEvents === options.closeMenuEvents;
+    var menuOpen = false; // Used only when duplicate open/close events. ie. `cxttap`
     var zoomEnabled = void 0;
     var panEnabled = void 0;
     var boxEnabled = void 0;
@@ -434,7 +434,7 @@ var cxtmenu = function cxtmenu(params) {
     };
 
     var startHandler = function startHandler(e) {
-      if (openCloseToggle) return;
+      if (menuOpen) return;
       target = this; // Remember which node the context menu is for
       var ele = this;
       var isCy = this === cy;
@@ -531,7 +531,7 @@ var cxtmenu = function cxtmenu(params) {
       var cosTheta = (dy * dy - d * d - dx * dx) / (-2 * d * dx);
       var theta = Math.acos(cosTheta);
 
-      if (d < rs + options.spotlightPadding || options.openMenuEvents === 'cxttap' && d > containerSize / 2) {
+      if (d < rs + options.spotlightPadding || options.openMenuEvents.includes('cxttap') && d > containerSize / 2) {
         queueDrawBg();
         return;
       }
@@ -570,8 +570,12 @@ var cxtmenu = function cxtmenu(params) {
     };
 
     var endHandler = function endHandler() {
-      if (openCloseToggle === false && options.openMenuEvents === options.closeMenuEvents) {
-        openCloseToggle = true;
+      var openEvts = options.openMenuEvents.split(' ');
+      var closeEvts = options.closeMenuEvents.split(' ');
+      if (!menuOpen && openEvts.filter(function (e) {
+        return closeEvts.includes(e);
+      }).length) {
+        menuOpen = true;
         return;
       }
       parent.style.display = 'none';
@@ -583,13 +587,13 @@ var cxtmenu = function cxtmenu(params) {
       }
 
       inGesture = false;
-      openCloseToggle = false;
+      menuOpen = false;
       restoreGestures();
     };
 
     window.addEventListener('resize', updatePixelRatio);
 
-    bindings.on('resize', updatePixelRatio()).on(options.openMenuEvents, options.selector, startHandler).on('cxtdrag tapdrag', options.selector, dragHandler).on('tapdrag', dragHandler).on(options.closeMenuEvents, endHandler);
+    bindings.on('resize', updatePixelRatio).on(options.openMenuEvents, options.selector, startHandler).on('cxtdrag tapdrag', options.selector, dragHandler).on('tapdrag', dragHandler).on(options.closeMenuEvents, endHandler);
   }
 
   function removeEventListeners() {
@@ -684,7 +688,7 @@ var defaults = {
   minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight
   maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight
   /**
-   * Open and Close menu events are related and only support the following combinations.
+   * Open and Close menu events are space-seperated cytoscape events and only support the following combinations.
    * openMenuEvents = 'cxttapstart' and/or 'taphold', closeMenuEvents = 'cxttapend' and/or 'tapend',
    * openMenuEvents = 'cxttap', closeMenuEvents = 'click' or 'cxttap'
    */
