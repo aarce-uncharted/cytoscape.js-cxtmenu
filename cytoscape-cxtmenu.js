@@ -572,9 +572,9 @@ var cxtmenu = function cxtmenu(params) {
     var endHandler = function endHandler() {
       var openEvts = options.openMenuEvents.split(' ');
       var closeEvts = options.closeMenuEvents.split(' ');
-      if (!menuOpen && openEvts.filter(function (e) {
+      if (!menuOpen && openEvts.some(function (e) {
         return closeEvts.includes(e);
-      }).length) {
+      })) {
         menuOpen = true;
         return;
       }

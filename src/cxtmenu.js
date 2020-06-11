@@ -474,7 +474,7 @@ let cxtmenu = function(params){
     const endHandler = function(){
       const openEvts = options.openMenuEvents.split(' ');
       const closeEvts = options.closeMenuEvents.split(' ');
-      if( !menuOpen && openEvts.filter(e => closeEvts.includes(e)).length ) {
+      if( !menuOpen && openEvts.some(e => closeEvts.includes(e)) ) {
         menuOpen = true;
         return;
       }
